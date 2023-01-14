@@ -1,7 +1,7 @@
 from .requestsutil import RequestsUtil
 from .device import *
 
-class SwitchbotRemote:
+class SwitchBotPy:
     def __init__(self, token, secret, nonce ,version, host='https://api.switch-bot.com') -> None:
         self._r = RequestsUtil(token=token,secret=secret,nonce=nonce,version=version, host=host)
 
