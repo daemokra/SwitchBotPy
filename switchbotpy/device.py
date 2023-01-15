@@ -1,5 +1,3 @@
-from .requestsutil import RequestsUtil
-from dotenv import load_dotenv
 from abc import ABCMeta, abstractmethod
 
 class Device(metaclass=ABCMeta):
@@ -31,14 +29,14 @@ class Device(metaclass=ABCMeta):
 class AirConditioner(Device):
     _ac_mode   = {'auto': 1, 'cool': 2, 'dry'   : 3, 'fan' : 4,'heat':5}
     _fan_speed = {'auto': 1, 'low' : 2, 'medium': 3, 'high': 4 }
-    def __init__(self, id, name, type, hub_id, request):
+    def __init__(self, client, id, name, type, hub_id):
         super().__init__(id, name, type, hub_id)
         self._temperature   = 25
         self._mode          = 'auto'
         self._speed     = 'auto'
         self._power_state   = 'off'
         self.set_params()
-        self._r = request
+        self._client = client
 
     @property
     def temperature(self):
@@ -72,25 +70,25 @@ class AirConditioner(Device):
     def turn_on(self):
         self._power_state = 'on'
         self.set_params()
-        return self._r.post_commands(self.id, self._params)
+        return self._client.post_commands(self.id, self._params)
 
     def turn_off(self):
         self._power_state = 'off'
         self.set_params()
-        self._r.post_commands(self.id, self._params)
+        self._client.post_commands(self.id, self._params)
 
     def get_status(self):
-        return self._r.get_status(self.id)
+        return self._client.get_status(self.id)
 
 
 
 class HubMini(Device):
-    def __init__(self, id, name, type, hub_id, request):
+    def __init__(self, client, id, name, type, hub_id):
         super().__init__(id, name, type, hub_id)
-        self._r = request
+        self._client = client
     def turn_on(self):
         pass
     def turn_off(self):
         pass
     def get_status(self):
-        return self._r.get_status(self.id)
+        return self._client.get_status(self.id)

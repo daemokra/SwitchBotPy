@@ -15,7 +15,6 @@ class SwitchBotPy:
         self._nonce = nonce
 
         self._session = requests.Session()
-        self._session.auth = (self._token, '')
         self._header = self._gen_header()
         self._session.headers.update(self._header)
 
@@ -26,7 +25,7 @@ class SwitchBotPy:
     def _gen_header(self):
         t = int(time.time() * 1000)
         self._header ={
-                #'Authorization': self._token,
+                'Authorization': self._token,
                 'Content-Type': 'application/json; charset=utf8',
                 'sign': self._gen_sign(t),
                 'nonce': self._nonce,
@@ -67,13 +66,13 @@ class SwitchBotPy:
         acs = []
         for device in self.get_virtual_devices():
             if  device['remoteType'] == 'Air Conditioner':
-                acs.append(AirConditioner(device['deviceId'], device['deviceName'], device['remoteType'], device['hubDeviceId'],self._r))
+                acs.append(AirConditioner(self, device['deviceId'], device['deviceName'], device['remoteType'], device['hubDeviceId']))
         return acs
 
     def get_hubminis(self) -> HubMini:
         d = []
         for device in self.get_physical_devices():
             if  device['deviceType'] == 'Hub Mini':
-                d.append(HubMini(device['deviceId'], device['deviceName'], device['deviceType'], device['hubDeviceId'],self._r))
+                d.append(HubMini(self, device['deviceId'], device['deviceName'], device['deviceType'], device['hubDeviceId']))
         return d
 
