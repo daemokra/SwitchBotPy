@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import base64
 import requests
+from typing import List
 from .device import *
 
 class SwitchBotPy:
@@ -33,14 +34,16 @@ class SwitchBotPy:
             }
         return self._header
 
-    def get_request(self, url):
+    def _get_request(self, url):
+        self._gen_header()
         res = self._session.get('/'.join([self.HOST,self._v,url]))
         data = res.json()
         if data['message'] == 'success':
             return res.json()
         return {}
 
-    def post_request(self, url, params):
+    def _post_request(self, url, params):
+        self._gen_header()
         res = self._session.post('/'.join([self.HOST,self._v,url]), data = json.dumps(params))
         data = res.json()
         if data['message'] == 'success':
@@ -48,13 +51,13 @@ class SwitchBotPy:
         return {}
 
     def get_status(self, id):
-        return self.get_request('/'.join(['devices',id,'status']))
+        return self._get_request('/'.join(['devices',id,'status']))
 
     def post_commands(self, id, params):
-        return self.post_request('/'.join(['devices',id,'commands']), params)
+        return self._post_request('/'.join(['devices',id,'commands']), params)
 
     def get_devices_list(self):
-        return self.get_request('devices')['body']
+        return self._get_request('devices')['body']
 
     def get_physical_devices(self):
         return self.get_devices_list()['deviceList']
@@ -62,14 +65,14 @@ class SwitchBotPy:
     def get_virtual_devices(self):
         return self.get_devices_list()['infraredRemoteList']
 
-    def get_airconditioners(self) -> AirConditioner:
-        acs = []
+    def get_airconditioners(self) -> List[AirConditioner]:
+        d = []
         for device in self.get_virtual_devices():
             if  device['remoteType'] == 'Air Conditioner':
-                acs.append(AirConditioner(self, device['deviceId'], device['deviceName'], device['remoteType'], device['hubDeviceId']))
-        return acs
+                d.append(AirConditioner(self, device['deviceId'], device['deviceName'], device['remoteType'], device['hubDeviceId']))
+        return d
 
-    def get_hubminis(self) -> HubMini:
+    def get_hubminis(self) -> List[HubMini]:
         d = []
         for device in self.get_physical_devices():
             if  device['deviceType'] == 'Hub Mini':

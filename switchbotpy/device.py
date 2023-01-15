@@ -33,7 +33,7 @@ class AirConditioner(Device):
         super().__init__(id, name, type, hub_id)
         self._temperature   = 25
         self._mode          = 'auto'
-        self._speed     = 'auto'
+        self._speed         = 'auto'
         self._power_state   = 'off'
         self.set_params()
         self._client = client
@@ -43,6 +43,12 @@ class AirConditioner(Device):
         return self._temperature
     @temperature.setter
     def temperature(self, val):
+        """16～30℃の間で設定可能"""
+    # TODO: 運転モードが'auto'のときは、相対的な温度になる。Validationのやり方考える。
+#        if val < 16:
+#            val = 16
+#        elif val > 30:
+#            val = 30
         self._temperature = val
     @property
     def mode(self):
@@ -60,6 +66,14 @@ class AirConditioner(Device):
     def state(self):
         return self._power_state
 
+    def get_num_of_mode(self):
+        """運転モードを数値で返す"""
+        return self._ac_mode[self.mode]
+
+    def get_num_of_speed(self):
+        """風量を数値で返す"""
+        return self._fan_speed[self.speed]
+
     def set_params(self):
         self._params = {
             "command": "setAll",
@@ -67,9 +81,16 @@ class AirConditioner(Device):
             "commandType": "command"
         }
 
-    def turn_on(self):
+    def turn_on(self,temp=None, mode=None, speed=None):
         self._power_state = 'on'
+        if temp != None:
+            self.temperature = temp
+        if mode != None:
+            self.mode = mode
+        if speed != None:
+            self.speed = speed
         self.set_params()
+        print(self._params)
         return self._client.post_commands(self.id, self._params)
 
     def turn_off(self):
