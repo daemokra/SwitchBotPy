@@ -1,11 +1,10 @@
 from setuptools import setup, find_packages
-from .switchbotpy import __version__
+from switchbotpy import __version__
 
 install_reqs = [
     'certifi>=2022.12.7',
     'charset-normalizer>=2.1.1',
     'idna>=3.4',
-    'python-dotenv>=0.21.0',
     'requests>=2.28.1',
     'urllib3>=1.26.13',
 ]

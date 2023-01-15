@@ -1,21 +1,67 @@
-from .requestsutil import RequestsUtil
+import json
+import time
+import hashlib
+import hmac
+import base64
+import requests
 from .device import *
 
 class SwitchBotPy:
-    def __init__(self, token, secret, nonce ,version, host='https://api.switch-bot.com') -> None:
-        self._r = RequestsUtil(token=token,secret=secret,nonce=nonce,version=version, host=host)
+    HOST = 'https://api.switch-bot.com'
+    def __init__(self, token, secret, version='v1.1', nonce='') -> None:
+        self._token = token
+        self._secret = bytes(secret, 'utf-8')
+        self._v = version
+        self._nonce = nonce
+
+        self._session = requests.Session()
+        self._session.auth = (self._token, '')
+        self._header = self._gen_header()
+        self._session.headers.update(self._header)
+
+    def _gen_sign(self, t):
+        string_to_sign = bytes('{}{}{}'.format(self._token, t, self._nonce), 'utf-8')
+        return base64.b64encode(hmac.new(self._secret, msg=string_to_sign, digestmod=hashlib.sha256).digest())
+
+    def _gen_header(self):
+        t = int(time.time() * 1000)
+        self._header ={
+                #'Authorization': self._token,
+                'Content-Type': 'application/json; charset=utf8',
+                'sign': self._gen_sign(t),
+                'nonce': self._nonce,
+                't': str(t)
+            }
+        return self._header
+
+    def get_request(self, url):
+        res = self._session.get('/'.join([self.HOST,self._v,url]))
+        data = res.json()
+        if data['message'] == 'success':
+            return res.json()
+        return {}
+
+    def post_request(self, url, params):
+        res = self._session.post('/'.join([self.HOST,self._v,url]), data = json.dumps(params))
+        data = res.json()
+        if data['message'] == 'success':
+            return res.json()
+        return {}
+
+    def get_status(self, id):
+        return self.get_request('/'.join(['devices',id,'status']))
+
+    def post_commands(self, id, params):
+        return self.post_request('/'.join(['devices',id,'commands']), params)
 
     def get_devices_list(self):
-        return self._r.get_request('devices')['body']
+        return self.get_request('devices')['body']
 
     def get_physical_devices(self):
         return self.get_devices_list()['deviceList']
 
     def get_virtual_devices(self):
         return self.get_devices_list()['infraredRemoteList']
-
-    def set_api_settings(self):
-        pass
 
     def get_airconditioners(self) -> AirConditioner:
         acs = []
@@ -30,3 +76,4 @@ class SwitchBotPy:
             if  device['deviceType'] == 'Hub Mini':
                 d.append(HubMini(device['deviceId'], device['deviceName'], device['deviceType'], device['hubDeviceId'],self._r))
         return d
+
